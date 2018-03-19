@@ -9,7 +9,7 @@ In this tutorial you will learn the basic principles behind decoding a video str
 
 - Double-click on the **msdk_decode.cpp** file to load the main application code.
 
-![Open Decode Project](images/msdk_decode_1.jpg)
+![Open Decode Project](images/msdk_decode_1.JPG)
 
 ## Understanding The Code
 Take a look through the existing code using the comments as a guide. This example shows the minimum API usage to decode a H.264 stream.
