@@ -17,7 +17,7 @@ Take a look through the existing code using the comments as a guide. This exampl
 The basic flow is outlined below:
 
  1. Specify input file to decode
- 2. Initialise a new Media SDK session and Decoder
+ 2. Initialise a new Media SDK session and decoder
  3. Configure basic video parameters (e.g. codec)
  4. Create buffers and query parameters
 	- Allocate a bit stream buffer to store encoded data before processing
@@ -29,3 +29,20 @@ The basic flow is outlined below:
 	- The first loop runs until the entire stream has been decoded
 	- The second loop drains the decoding pipeline once the end of the stream is reached
 8. Clean-up resources (e.g. buffers, file handles) and end the session.
+
+## Build & Run The Code
+
+ - Build the solution: **Build->Build Solution**
+![Build Solution](images/msdk_decode_2.JPG)
+ - Make sure the application built successfully by checking the **Output** log in the bottom left pane.
+![Check Build](images/msdk_decode_3.JPG)
+ - Run the application using the **Performance Profiler**
+	 - Select **Debug->Performance Profiler...**
+	 - Make sure **CPU Usage** and **GPU Usage** are ticked and click **Start** to begin profiling.
+![Performance Profiler](images/msdk_decode_4.JPG)
+ - A console window will load running the application and the profiling tool will record usage data in the background.
+![Application Running](images/msdk_decode_5.JPG)
+ - Wait for the application to finish decoding the video stream and then take note of the **execution time** printed in the console window before **pressing 'enter' to close the command window** and stop the profiling session.
+![Stop Application](images/msdk_decode_6.JPG)
+ - Notice that **CPU Usage** is high and **GPU Usage** is low confirming that CPU based decoding is taking place.
+![CPU Usage](images/msdk_decode_7.JPG)
