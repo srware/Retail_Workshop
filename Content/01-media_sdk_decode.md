@@ -9,7 +9,7 @@ In this tutorial you will learn the basic principles behind decoding a video str
 
 - Double-click on the **msdk_decode.cpp** file to load the main application code.
 
-![Open Decode Project](images/msdk_decode_1.JPG)
+![Open Decode Project](images/msdk_decode_1.jpg)
 
 ## Understanding The Code
 Take a look through the existing code using the comments as a guide. This example shows the minimum API usage to decode a H.264 stream.
@@ -33,16 +33,16 @@ The basic flow is outlined below:
 ## Build & Run The Code
 
  - Build the solution: **Build->Build Solution**
-![Build Solution](images/msdk_decode_2.JPG)
+![Build Solution](images/msdk_decode_2.jpg)
  - Make sure the application built successfully by checking the **Output** log in the bottom left pane.
-![Check Build](images/msdk_decode_3.JPG)
+![Check Build](images/msdk_decode_3.jpg)
  - Run the application using the **Performance Profiler**
 	 - Select **Debug->Performance Profiler...**
 	 - Make sure **CPU Usage** and **GPU Usage** are ticked and click **Start** to begin profiling.
-![Performance Profiler](images/msdk_decode_4.JPG)
+![Performance Profiler](images/msdk_decode_4.jpg)
  - A console window will load running the application and the profiling tool will record usage data in the background.
-![Application Running](images/msdk_decode_5.JPG)
+![Application Running](images/msdk_decode_5.jpg)
  - Wait for the application to finish decoding the video stream and then take note of the **execution time** printed in the console window before **pressing 'enter' to close the command window** and stop the profiling session.
-![Stop Application](images/msdk_decode_6.JPG)
+![Stop Application](images/msdk_decode_6.jpg)
  - Notice that **CPU Usage** is high and **GPU Usage** is low confirming that CPU based decoding is taking place.
-![CPU Usage](images/msdk_decode_7.JPG)
+![CPU Usage](images/msdk_decode_7.jpg)
