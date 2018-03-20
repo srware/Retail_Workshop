@@ -70,3 +70,61 @@ Where possible we want to use hardware based decoding for improved efficiency an
  - Note the heavy utilisation of the **GPU VIDEO_DECODE** engine.
 
 ![GPU Details](images/msdk_decode_9.jpg)
+
+## Further Optimisation
+The current code uses **system memory** for the working surfaces as this is the implementation provided by the default allocator when creating an Intel(R) Media SDK session. Allocating surfaces in video memory is highly desirable since this eliminates copying them from the system memory to the video memory when decoding leading to improved performance. To achieve this we have to provide an external allocator which is able to manage video memory using DirectX.
+
+ - Firstly we need to modify our preprocessor definitions to tell the build system we will be using DirectX based memory allocation. **Right-click** on the **msdk_decode** project in the **Solution Explorer** window and select **Properties**
+
+
+![Properties](images/msdk_decode_10.jpg)
+
+ - Navigate to **Configuration Properties -> C/C++ -> Preprocessor** and select **Preprocessor Definitions**. Once highlighted an arrow will appear at the end of the input box. Click on this and select **<Edit...>** from the options that appear.
+
+![Preprocessor Edit](images/msdk_decode_11.jpg)
+
+ - Add **DX_D3D** to the list of definitions and click **OK** to close the window. Click **Apply** and finally **OK** to close the **Properties** window.
+
+![Modify Definitions](images/msdk_decode_12.jpg)
+
+ - We now need to create a variable for the external allocator and pass this into our **Initialize** function.
+``` cpp
+	mfxFrameAllocator mfxAllocator;
+	sts = Initialize(impl, ver, &session, &mfxAllocator);
+```
+ - Next we update the IO pattern specified in the video parameters to tell the decoder we are using video memory instead of system memory.
+```
+	mfxVideoParams.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+```
+
+
+ - We now need to use our new allocator when allocating surface memory for our decoder. Replace **Section 5** with the code below.
+```
+	//5. Allocate surfaces for decoder
+	mfxFrameAllocResponse mfxResponse;
+	sts = mfxAllocator.Alloc(mfxAllocator.pthis, &Request, &mfxResponse);
+	MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
+
+	// Allocate surface headers (mfxFrameSurface1) for decoder
+	mfxFrameSurface1** pmfxSurfaces = new mfxFrameSurface1 *[numSurfaces];
+	MSDK_CHECK_POINTER(pmfxSurfaces, MFX_ERR_MEMORY_ALLOC);
+	for (int i = 0; i < numSurfaces; i++) {
+		pmfxSurfaces[i] = new mfxFrameSurface1;
+		memset(pmfxSurfaces[i], 0, sizeof(mfxFrameSurface1));
+		memcpy(&(pmfxSurfaces[i]->Info), &(mfxVideoParams.mfx.FrameInfo), sizeof(mfxFrameInfo));
+		pmfxSurfaces[i]->Data.MemId = mfxResponse.mids[i];      // MID (memory id) represents one video NV12 surface
+	}
+```
+
+ - Finally we need to make sure our allocator is destroyed once decoding is finished. Add the following line of code after the surface deletion for loop in **section 8**:
+```
+	mfxAllocator.Free(mfxAllocator.pthis, &mfxResponse);
+```
+
+ - Once again **build** the project and run the **Performance Profiler** as before. Note the **execution time** before closing the console window which should now be significantly improved. Also notice the **GPU** is now **fully utilised** whilst the application is running as it is no longer having to wait for frames to be copied from system memory.
+
+![GPU Usage](images/msdk_decode_13.jpg)
+
+ - Click on **View Details** in the **GPU Usage** window as you did previously. Note that the **GPU VIDEO_DECODE** engine graph is now a much more constant line indicating that we are getting maximum performance from the hardware.
+
+![Optimised GPU Decode](images/msdk_decode_14.jpg)
