@@ -33,16 +33,22 @@ The basic flow is outlined below:
 ## Build & Run The Code
 
  - Build the solution: **Build->Build Solution**
+ 
 ![Build Solution](images/msdk_decode_2.jpg)
  - Make sure the application built successfully by checking the **Output** log in the bottom left pane.
+ 
 ![Check Build](images/msdk_decode_3.jpg)
- - Run the application using the **Performance Profiler**
+ - Run the application using the **Performance Profiler**:
 	 - Select **Debug->Performance Profiler...**
 	 - Make sure **CPU Usage** and **GPU Usage** are ticked and click **Start** to begin profiling.
+	 
 ![Performance Profiler](images/msdk_decode_4.jpg)
- - A console window will load running the application and the profiling tool will record usage data in the background.
+ - A console window will load running the application whilst the profiling tool records usage data in the background.
+ 
 ![Application Running](images/msdk_decode_5.jpg)
- - Wait for the application to finish decoding the video stream and then take note of the **execution time** printed in the console window before **pressing 'enter' to close the command window** and stop the profiling session.
+ - Wait for the application to finish decoding the video stream and then take note of the **execution time** printed in the console window. You can then **press 'enter' to close the command window** and stop the profiling session.
+ 
 ![Stop Application](images/msdk_decode_6.jpg)
- - Notice that **CPU Usage** is high and **GPU Usage** is low confirming that CPU based decoding is taking place.
+ - Now go back to Visual Studio and take a look at the **GPU Utilization** and **CPU** graphs. Notice that CPU usage is high and GPU usage is low confirming that CPU based decoding is taking place.
+
 ![CPU Usage](images/msdk_decode_7.jpg)
