@@ -20,16 +20,16 @@ The basic flow is outlined below:
  2. Create the Intel(R) Media SDK session, decoder and encoder
  3. Configure decoder video parameters (e.g. codec)
  4. Create buffers and query parameters
-	- Allocate a bit stream buffer to store encoded data before processing
-	- Read the header from the input file and use this to populate the rest of the video parameters
+    - Allocate a bit stream buffer to store encoded data before processing
+    - Read the header from the input file and use this to populate the rest of the video parameters
  5. Configure encoder video parameters (e.g. codec, bitrate, rate control)
  6. Allocate the surfaces (video frame working memory) required by the decoder and encoder
  7. Initialise the Intel(R) Media SDK decode and encode components
  8. Allocate a bit stream buffer to store the output from the encoder
  9. Start the transcoding process:
-	-  The first loop is the main transcoding loop where the input stream is decoded and encoded until the end of the stream is reached
-	- The second loop drains the decoding pipeline once the end of the stream is reached ensuring the full input stream is encoded
-	- The third loop drains the encoding pipeline once the decoding pipeline is flushed and writes the last few encoded frames to disk
+    -  The first loop is the main transcoding loop where the input stream is decoded and encoded until the end of the stream is reached
+    - The second loop drains the decoding pipeline once the end of the stream is reached ensuring the full input stream is encoded
+    - The third loop drains the encoding pipeline once the decoding pipeline is flushed and writes the last few encoded frames to disk
  10. Clean-up resources (e.g. buffers, file handles) and end the session.
 
 ## Build & Run The Code
@@ -41,9 +41,9 @@ The basic flow is outlined below:
 ========== Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========
 ```
  - Run the application using the **Performance Profiler**:
-	 - Select **Debug->Performance Profiler...**
-	 - Make sure **CPU Usage** and **GPU Usage** are ticked and click **Start** to begin profiling.
-	 
+     - Select **Debug->Performance Profiler...**
+     - Make sure **CPU Usage** and **GPU Usage** are ticked and click **Start** to begin profiling.
+     
 ![Performance Profiler](images/msdk_transcode_2.jpg)
  
  - A console window will load running the application whilst the profiling tool records usage data in the background.
@@ -67,14 +67,14 @@ In our current code we are using system memory for the working surfaces used by 
 
  - We start by updating the IO pattern in our decoder video parameters from **MFX_IOPATTERN_OUT_SYSTEM_MEMORY** to **MFX_IOPATTERN_OUT_OPAQUE_MEMORY**.
 ``` cpp
-	mfxDecParams.IOPattern = MFX_IOPATTERN_OUT_OPAQUE_MEMORY;
+    mfxDecParams.IOPattern = MFX_IOPATTERN_OUT_OPAQUE_MEMORY;
 ```
  - We make the same change to our encoder video parameters.
 ``` cpp
      mfxEncParams.IOPattern = MFX_IOPATTERN_IN_OPAQUE_MEMORY;
 ```
  - We need to update our surface allocation code to use opaque memory allocation. Replace the code in **section 6** with the code below.
-	 - Note that we don't allocate buffer memory anymore as for opaque memory this is handled internally by the SDK. We simply create **mfxExtOpaqueSurfaceAlloc** structures to hold a reference to the allocated surfaces and attach these to our decoder and encoder.
+     - Note that we don't allocate buffer memory anymore as for opaque memory this is handled internally by the SDK. We simply create **mfxExtOpaqueSurfaceAlloc** structures to hold a reference to the allocated surfaces and attach these to our decoder and encoder.
 ``` cpp
     //6. Initialize shared surfaces for decoder and encoder
     mfxFrameSurface1** pSurfaces = new mfxFrameSurface1 *[nSurfNum];
@@ -128,7 +128,7 @@ To better utilise the GPU we can make our transcode pipeline asynchronous so mor
 ```
  - We also need to update our encode parameters in the same way. We use the same value as we used for the decode parameters to keep things aligned.
 ``` cpp
-	mfxEncParams.AsyncDepth = mfxDecParams.AsyncDepth;
+    mfxEncParams.AsyncDepth = mfxDecParams.AsyncDepth;
 ```
  - We now need to create a task pool for our encoding operations. Rather than having a single bit stream buffer for our encoder output each "task" has it's own so we need to replace the code in **section 8** with the following:
 ``` cpp
@@ -153,72 +153,72 @@ To better utilise the GPU we can make our transcode pipeline asynchronous so mor
     //
     // Stage 1: Main transcoding loop
     //
-	while (MFX_ERR_NONE <= sts || MFX_ERR_MORE_DATA == sts || MFX_ERR_MORE_SURFACE == sts) {
-		nTaskIdx = GetFreeTaskIndex(pTasks, taskPoolSize);  // Find free task
-		if (MFX_ERR_NOT_FOUND == nTaskIdx) {
-			// No more free tasks, need to sync
-			sts = session.SyncOperation(pTasks[nFirstSyncTask].syncp, 60000);
-			MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
+    while (MFX_ERR_NONE <= sts || MFX_ERR_MORE_DATA == sts || MFX_ERR_MORE_SURFACE == sts) {
+        nTaskIdx = GetFreeTaskIndex(pTasks, taskPoolSize);  // Find free task
+        if (MFX_ERR_NOT_FOUND == nTaskIdx) {
+            // No more free tasks, need to sync
+            sts = session.SyncOperation(pTasks[nFirstSyncTask].syncp, 60000);
+            MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
 
-			sts = WriteBitStreamFrame(&pTasks[nFirstSyncTask].mfxBS, fSink);
-			MSDK_BREAK_ON_ERROR(sts);
+            sts = WriteBitStreamFrame(&pTasks[nFirstSyncTask].mfxBS, fSink);
+            MSDK_BREAK_ON_ERROR(sts);
 
-			pTasks[nFirstSyncTask].syncp = NULL;
-			pTasks[nFirstSyncTask].mfxBS.DataLength = 0;
-			pTasks[nFirstSyncTask].mfxBS.DataOffset = 0;
-			nFirstSyncTask = (nFirstSyncTask + 1) % taskPoolSize;
+            pTasks[nFirstSyncTask].syncp = NULL;
+            pTasks[nFirstSyncTask].mfxBS.DataLength = 0;
+            pTasks[nFirstSyncTask].mfxBS.DataOffset = 0;
+            nFirstSyncTask = (nFirstSyncTask + 1) % taskPoolSize;
 
-			++nFrame;
-			if (nFrame % 100 == 0) {
-				printf("Frame number: %d\r", nFrame);
-				fflush(stdout);
-			}
-		} else {
-			if (MFX_WRN_DEVICE_BUSY == sts)
-				MSDK_SLEEP(1);  // Wait and then repeat the same call to DecodeFrameAsync
+            ++nFrame;
+            if (nFrame % 100 == 0) {
+                printf("Frame number: %d\r", nFrame);
+                fflush(stdout);
+            }
+        } else {
+            if (MFX_WRN_DEVICE_BUSY == sts)
+                MSDK_SLEEP(1);  // Wait and then repeat the same call to DecodeFrameAsync
 
-			if (MFX_ERR_MORE_DATA == sts) {
-				sts = ReadBitStreamData(&mfxBS, fSource);  // Read more data to input bit stream
-				MSDK_BREAK_ON_ERROR(sts);
-			}
+            if (MFX_ERR_MORE_DATA == sts) {
+                sts = ReadBitStreamData(&mfxBS, fSource);  // Read more data to input bit stream
+                MSDK_BREAK_ON_ERROR(sts);
+            }
 
-			if (MFX_ERR_MORE_SURFACE == sts || MFX_ERR_NONE == sts) {
-				nIndex = GetFreeSurfaceIndex(pSurfaces, nSurfNum);  // Find free frame surface
-				MSDK_CHECK_ERROR(MFX_ERR_NOT_FOUND, nIndex, MFX_ERR_MEMORY_ALLOC);
-			}
-			// Decode a frame asychronously (returns immediately)
-			sts = mfxDEC.DecodeFrameAsync(&mfxBS, pSurfaces[nIndex], &pmfxOutSurface, &syncpD);
+            if (MFX_ERR_MORE_SURFACE == sts || MFX_ERR_NONE == sts) {
+                nIndex = GetFreeSurfaceIndex(pSurfaces, nSurfNum);  // Find free frame surface
+                MSDK_CHECK_ERROR(MFX_ERR_NOT_FOUND, nIndex, MFX_ERR_MEMORY_ALLOC);
+            }
+            // Decode a frame asychronously (returns immediately)
+            sts = mfxDEC.DecodeFrameAsync(&mfxBS, pSurfaces[nIndex], &pmfxOutSurface, &syncpD);
 
-			// Ignore warnings if output is available,
-			// if no output and no action required just repeat the DecodeFrameAsync call
-			if (MFX_ERR_NONE < sts && syncpD)
-				sts = MFX_ERR_NONE;
+            // Ignore warnings if output is available,
+            // if no output and no action required just repeat the DecodeFrameAsync call
+            if (MFX_ERR_NONE < sts && syncpD)
+                sts = MFX_ERR_NONE;
 
-			if (MFX_ERR_NONE == sts) {
-				for (;;) {
-					// Encode a frame asychronously (returns immediately)
-					sts = mfxENC.EncodeFrameAsync(NULL, pmfxOutSurface, &pTasks[nTaskIdx].mfxBS, &pTasks[nTaskIdx].syncp);
+            if (MFX_ERR_NONE == sts) {
+                for (;;) {
+                    // Encode a frame asychronously (returns immediately)
+                    sts = mfxENC.EncodeFrameAsync(NULL, pmfxOutSurface, &pTasks[nTaskIdx].mfxBS, &pTasks[nTaskIdx].syncp);
 
-					if (MFX_ERR_NONE < sts && !pTasks[nTaskIdx].syncp) { // Repeat the call if warning and no output
-						if (MFX_WRN_DEVICE_BUSY == sts)
-							MSDK_SLEEP(1);  // Wait if device is busy
-					}
-					else if (MFX_ERR_NONE < sts && pTasks[nTaskIdx].syncp) {
-						sts = MFX_ERR_NONE; // Ignore warnings if output is available
-						break;
-					}
-					else
-						break;
-				}
+                    if (MFX_ERR_NONE < sts && !pTasks[nTaskIdx].syncp) { // Repeat the call if warning and no output
+                        if (MFX_WRN_DEVICE_BUSY == sts)
+                            MSDK_SLEEP(1);  // Wait if device is busy
+                    }
+                    else if (MFX_ERR_NONE < sts && pTasks[nTaskIdx].syncp) {
+                        sts = MFX_ERR_NONE; // Ignore warnings if output is available
+                        break;
+                    }
+                    else
+                        break;
+                }
 
-				if (MFX_ERR_MORE_DATA == sts) {
-					// MFX_ERR_MORE_DATA indicates encoder need more input, request more surfaces from previous operation
-					sts = MFX_ERR_NONE;
-					continue;
-				}
-			}
-		}
-	}
+                if (MFX_ERR_MORE_DATA == sts) {
+                    // MFX_ERR_MORE_DATA indicates encoder need more input, request more surfaces from previous operation
+                    sts = MFX_ERR_NONE;
+                    continue;
+                }
+            }
+        }
+    }
 ```
 
  - **Stage 2** should be the same as the main transcoding loop above with the exception that we pass **NULL** to the **DecodeFrameAsync** call in order to drain the decoding pipeline.
@@ -231,67 +231,67 @@ sts = mfxDEC.DecodeFrameAsync(NULL, pSurfaces[nIndex], &pmfxOutSurface, &syncpD)
     //
     // Stage 3: Retrieve the buffered encoded frames
     //
-	while (MFX_ERR_NONE <= sts) {
-		nTaskIdx = GetFreeTaskIndex(pTasks, taskPoolSize);      // Find free task
-		if (MFX_ERR_NOT_FOUND == nTaskIdx) {
-			// No more free tasks, need to sync
-			sts = session.SyncOperation(pTasks[nFirstSyncTask].syncp, 60000);
-			MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
+    while (MFX_ERR_NONE <= sts) {
+        nTaskIdx = GetFreeTaskIndex(pTasks, taskPoolSize);      // Find free task
+        if (MFX_ERR_NOT_FOUND == nTaskIdx) {
+            // No more free tasks, need to sync
+            sts = session.SyncOperation(pTasks[nFirstSyncTask].syncp, 60000);
+            MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
 
-			sts = WriteBitStreamFrame(&pTasks[nFirstSyncTask].mfxBS, fSink);
-			MSDK_BREAK_ON_ERROR(sts);
+            sts = WriteBitStreamFrame(&pTasks[nFirstSyncTask].mfxBS, fSink);
+            MSDK_BREAK_ON_ERROR(sts);
 
-			pTasks[nFirstSyncTask].syncp = NULL;
-			pTasks[nFirstSyncTask].mfxBS.DataLength = 0;
-			pTasks[nFirstSyncTask].mfxBS.DataOffset = 0;
-			nFirstSyncTask = (nFirstSyncTask + 1) % taskPoolSize;
+            pTasks[nFirstSyncTask].syncp = NULL;
+            pTasks[nFirstSyncTask].mfxBS.DataLength = 0;
+            pTasks[nFirstSyncTask].mfxBS.DataOffset = 0;
+            nFirstSyncTask = (nFirstSyncTask + 1) % taskPoolSize;
 
-			++nFrame;
-			printf("Frame number: %d\r", nFrame);
-			fflush(stdout);
+            ++nFrame;
+            printf("Frame number: %d\r", nFrame);
+            fflush(stdout);
 
-		}
-		else {
-			for (;;) {
-				// Encode a frame asychronously (returns immediately)
-				sts = mfxENC.EncodeFrameAsync(NULL, NULL, &pTasks[nTaskIdx].mfxBS, &pTasks[nTaskIdx].syncp);
+        }
+        else {
+            for (;;) {
+                // Encode a frame asychronously (returns immediately)
+                sts = mfxENC.EncodeFrameAsync(NULL, NULL, &pTasks[nTaskIdx].mfxBS, &pTasks[nTaskIdx].syncp);
 
-				if (MFX_ERR_NONE < sts && !pTasks[nTaskIdx].syncp) { // Repeat the call if warning and no output
-					if (MFX_WRN_DEVICE_BUSY == sts)
-						MSDK_SLEEP(1);  // Wait if device is busy
-				}
-				else if (MFX_ERR_NONE < sts && pTasks[nTaskIdx].syncp) {
-					sts = MFX_ERR_NONE; // Ignore warnings if output is available
-					break;
-				}
-				else
-					break;
-			}
-		}
-	}
+                if (MFX_ERR_NONE < sts && !pTasks[nTaskIdx].syncp) { // Repeat the call if warning and no output
+                    if (MFX_WRN_DEVICE_BUSY == sts)
+                        MSDK_SLEEP(1);  // Wait if device is busy
+                }
+                else if (MFX_ERR_NONE < sts && pTasks[nTaskIdx].syncp) {
+                    sts = MFX_ERR_NONE; // Ignore warnings if output is available
+                    break;
+                }
+                else
+                    break;
+            }
+        }
+    }
 ```
 
  - We also need to add a **4th stage** to our transcode process in order to ensure all tasks in our task pool are synchronised and all output from the encoder gets written to disk.
 ```
-	//
-	// Stage 4: Sync all remaining tasks in task pool
-	//
-	while (pTasks[nFirstSyncTask].syncp) {
-		sts = session.SyncOperation(pTasks[nFirstSyncTask].syncp, 60000);
-		MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
+    //
+    // Stage 4: Sync all remaining tasks in task pool
+    //
+    while (pTasks[nFirstSyncTask].syncp) {
+        sts = session.SyncOperation(pTasks[nFirstSyncTask].syncp, 60000);
+        MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
 
-		sts = WriteBitStreamFrame(&pTasks[nFirstSyncTask].mfxBS, fSink);
-		MSDK_BREAK_ON_ERROR(sts);
+        sts = WriteBitStreamFrame(&pTasks[nFirstSyncTask].mfxBS, fSink);
+        MSDK_BREAK_ON_ERROR(sts);
 
-		pTasks[nFirstSyncTask].syncp = NULL;
-		pTasks[nFirstSyncTask].mfxBS.DataLength = 0;
-		pTasks[nFirstSyncTask].mfxBS.DataOffset = 0;
-		nFirstSyncTask = (nFirstSyncTask + 1) % taskPoolSize;
+        pTasks[nFirstSyncTask].syncp = NULL;
+        pTasks[nFirstSyncTask].mfxBS.DataLength = 0;
+        pTasks[nFirstSyncTask].mfxBS.DataOffset = 0;
+        nFirstSyncTask = (nFirstSyncTask + 1) % taskPoolSize;
 
-		++nFrame;
-		printf("Frame number: %d\r", nFrame);
-		fflush(stdout);
-	}
+        ++nFrame;
+        printf("Frame number: %d\r", nFrame);
+        fflush(stdout);
+    }
 ```
 
  - Finally we need cleanup our task buffers and task pool. Replace the following line of code:
