@@ -20,14 +20,14 @@ The basic flow is outlined below:
  2. Initialise a new Media SDK session and decoder
  3. Configure basic video parameters (e.g. codec)
  4. Create buffers and query parameters
-	- Allocate a bit stream buffer to store encoded data before processing
-	- Read the header from the input file and use this to populate the rest of the video parameters
-	- Run a query to check for the validity and SDK support of these parameters
+    - Allocate a bit stream buffer to store encoded data before processing
+    - Read the header from the input file and use this to populate the rest of the video parameters
+    - Run a query to check for the validity and SDK support of these parameters
  5. Allocate the surfaces (video frame working memory) required by the decoder
  6. Initialise the decoder
  7. Start the decoding process:
-	- The first loop runs until the entire stream has been decoded
-	- The second loop drains the decoding pipeline once the end of the stream is reached
+    - The first loop runs until the entire stream has been decoded
+    - The second loop drains the decoding pipeline once the end of the stream is reached
 8. Clean-up resources (e.g. buffers, file handles) and end the session.
 
 ## Build & Run The Code
@@ -39,9 +39,9 @@ The basic flow is outlined below:
  
 ![Check Build](images/msdk_decode_3.jpg)
  - Run the application using the **Performance Profiler**:
-	 - Select **Debug->Performance Profiler...**
-	 - Make sure **CPU Usage** and **GPU Usage** are ticked and click **Start** to begin profiling.
-	 
+     - Select **Debug->Performance Profiler...**
+     - Make sure **CPU Usage** and **GPU Usage** are ticked and click **Start** to begin profiling.
+     
 ![Performance Profiler](images/msdk_decode_4.jpg)
  - A console window will load running the application whilst the profiling tool records usage data in the background.
  
@@ -89,36 +89,36 @@ The current code uses **system memory** for the working surfaces as this is the 
 
  - We now need to create a variable for the external allocator and pass this into our **Initialize** function.
 ``` cpp
-	mfxFrameAllocator mfxAllocator;
-	sts = Initialize(impl, ver, &session, &mfxAllocator);
+    mfxFrameAllocator mfxAllocator;
+    sts = Initialize(impl, ver, &session, &mfxAllocator);
 ```
  - Next we update the IO pattern specified in the video parameters to tell the decoder we are using video memory instead of system memory.
 ```
-	mfxVideoParams.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+    mfxVideoParams.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
 ```
 
 
  - We now need to use our new allocator when allocating surface memory for our decoder. Replace **Section 5** with the code below.
 ```
-	//5. Allocate surfaces for decoder
-	mfxFrameAllocResponse mfxResponse;
-	sts = mfxAllocator.Alloc(mfxAllocator.pthis, &Request, &mfxResponse);
-	MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
+    //5. Allocate surfaces for decoder
+    mfxFrameAllocResponse mfxResponse;
+    sts = mfxAllocator.Alloc(mfxAllocator.pthis, &Request, &mfxResponse);
+    MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
 
-	// Allocate surface headers (mfxFrameSurface1) for decoder
-	mfxFrameSurface1** pmfxSurfaces = new mfxFrameSurface1 *[numSurfaces];
-	MSDK_CHECK_POINTER(pmfxSurfaces, MFX_ERR_MEMORY_ALLOC);
-	for (int i = 0; i < numSurfaces; i++) {
-		pmfxSurfaces[i] = new mfxFrameSurface1;
-		memset(pmfxSurfaces[i], 0, sizeof(mfxFrameSurface1));
-		memcpy(&(pmfxSurfaces[i]->Info), &(mfxVideoParams.mfx.FrameInfo), sizeof(mfxFrameInfo));
-		pmfxSurfaces[i]->Data.MemId = mfxResponse.mids[i];      // MID (memory id) represents one video NV12 surface
-	}
+    // Allocate surface headers (mfxFrameSurface1) for decoder
+    mfxFrameSurface1** pmfxSurfaces = new mfxFrameSurface1 *[numSurfaces];
+    MSDK_CHECK_POINTER(pmfxSurfaces, MFX_ERR_MEMORY_ALLOC);
+    for (int i = 0; i < numSurfaces; i++) {
+        pmfxSurfaces[i] = new mfxFrameSurface1;
+        memset(pmfxSurfaces[i], 0, sizeof(mfxFrameSurface1));
+        memcpy(&(pmfxSurfaces[i]->Info), &(mfxVideoParams.mfx.FrameInfo), sizeof(mfxFrameInfo));
+        pmfxSurfaces[i]->Data.MemId = mfxResponse.mids[i];      // MID (memory id) represents one video NV12 surface
+    }
 ```
 
  - Finally we need to make sure our allocator is destroyed once decoding is finished. Add the following line of code after the surface deletion for loop in **section 8**:
 ```
-	mfxAllocator.Free(mfxAllocator.pthis, &mfxResponse);
+    mfxAllocator.Free(mfxAllocator.pthis, &mfxResponse);
 ```
 
  - Once again **build** the project and run the **Performance Profiler** as before. Note the **execution time** before closing the console window which should now be significantly improved. Also notice the **GPU** is now **fully utilised** whilst the application is running as it is no longer having to wait for frames to be copied from system memory.
