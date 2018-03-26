@@ -576,3 +576,51 @@ Often the reason for transcoding is because you want to change the input source 
 ```
 ffplay.exe out.h264
 ```
+## HEVC Encoding
+So far we have been working with H.264 video streams but if we want to transcode our stream using a more efficient codec we can use the newer HEVC (H.265) codec which can produce the same perceived quality at lower bitrates which in turn leads to smaller file sizes. The trade-off is longer encoding time.
+
+ - Start by updating the filename of the output file to **.h265** so we don't overwrite our existing H.264 encode.
+``` cpp
+    char oPath[] = "..\\out.h265";
+```
+ - We can also reduce the target encode bitrate for HEVC. Try setting the bitrate variable to half of what we used for H.264.
+``` cpp
+    // Bitrate for encoder
+    mfxU16 bitrate = 4000;
+```
+ - Next we need to update our encoder parameters to use HEVC. As we are only working with 8-bit streams and not 10-bit (usually referred to as High Dynamic Range or HDR) we only need to update the **CodecId** parameter.
+``` cpp
+    mfxEncParams.mfx.CodecId = MFX_CODEC_HEVC;
+```
+ - HEVC support is provided as a plugin to the Intel(R) Media SDK which needs to be manually loaded at runtime. Add the following code to load the HEVC plugin after the code to populate the encoder parameters.
+``` cpp
+    // Load the HEVC plugin
+    mfxPluginUID codecUID;
+    bool success = true;
+    codecUID = msdkGetPluginUID(MFX_IMPL_HARDWARE, MSDK_VENCODE, mfxEncParams.mfx.CodecId);
+    if (AreGuidsEqual(codecUID, MSDK_PLUGINGUID_NULL)) {
+        printf("Get Plugin UID for HEVC is failed.\n");
+        success = false;
+    }
+
+    printf("Loading HEVC plugin: %s\n", ConvertGuidToString(codecUID));
+
+    // If we got the UID, load the plugin
+    if (success) {
+        sts = MFXVideoUSER_Load(session, &codecUID, ver.Major);
+        if (sts < MFX_ERR_NONE) {
+            printf("Loading HEVC plugin failed\n");
+            success = false;
+        }
+    }
+```
+ - **Build** the solution and use the **Performance Profiler** to run the code. You will notice that the **execution time** is longer and **GPU Utilization** is higher when encoding using the more complex HEVC codec.
+ - Open **File Explorer** and navigate to the **Retail_Workshop** directory. Note the size of the **out.h264** and **out.h265** files. You will notice that the file encoded using HEVC is less than half the size of the H.264 encoded file.
+
+![HEVC](images/msdk_transcode_5.jpg)
+
+ - You can use the **ffplay** utility as you did before to play both files and compare the output.
+```
+ffplay.exe out.h264
+ffplay.exe out.h265
+```
