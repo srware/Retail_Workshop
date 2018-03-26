@@ -1,3 +1,4 @@
+
 # Transcoding a video stream using Intel(R) Media SDK
 In this tutorial we will look at a simple transcode (decode + encode) pipeline using the Intel(R) Media SDK. We will start with a basic example using system memory for working surfaces before exploring ways of improving the performance of the transcode process using features such as opaque memory and asynchronous operation. We will also look at adding a video frame processing (VPP) resize to the transcode process.
 
@@ -186,6 +187,7 @@ To better utilise the GPU we can make our transcode pipeline asynchronous so mor
                 nIndex = GetFreeSurfaceIndex(pSurfaces, nSurfNum);  // Find free frame surface
                 MSDK_CHECK_ERROR(MFX_ERR_NOT_FOUND, nIndex, MFX_ERR_MEMORY_ALLOC);
             }
+            
             // Decode a frame asychronously (returns immediately)
             sts = mfxDEC.DecodeFrameAsync(&mfxBS, pSurfaces[nIndex], &pmfxOutSurface, &syncpD);
 
@@ -202,12 +204,10 @@ To better utilise the GPU we can make our transcode pipeline asynchronous so mor
                     if (MFX_ERR_NONE < sts && !pTasks[nTaskIdx].syncp) { // Repeat the call if warning and no output
                         if (MFX_WRN_DEVICE_BUSY == sts)
                             MSDK_SLEEP(1);  // Wait if device is busy
-                    }
-                    else if (MFX_ERR_NONE < sts && pTasks[nTaskIdx].syncp) {
+                    } else if (MFX_ERR_NONE < sts && pTasks[nTaskIdx].syncp) {
                         sts = MFX_ERR_NONE; // Ignore warnings if output is available
                         break;
-                    }
-                    else
+                    } else
                         break;
                 }
 
@@ -222,12 +222,12 @@ To better utilise the GPU we can make our transcode pipeline asynchronous so mor
 ```
 
  - **Stage 2** should be the same as the main transcoding loop above with the exception that we pass **NULL** to the **DecodeFrameAsync** call in order to drain the decoding pipeline.
-```
+``` cpp
 sts = mfxDEC.DecodeFrameAsync(NULL, pSurfaces[nIndex], &pmfxOutSurface, &syncpD);
 ```
 
  - **Stage 3** of the transcoding process should now look like this:
-```
+``` cpp
     //
     // Stage 3: Retrieve the buffered encoded frames
     //
@@ -250,8 +250,7 @@ sts = mfxDEC.DecodeFrameAsync(NULL, pSurfaces[nIndex], &pmfxOutSurface, &syncpD)
             printf("Frame number: %d\r", nFrame);
             fflush(stdout);
 
-        }
-        else {
+        } else {
             for (;;) {
                 // Encode a frame asychronously (returns immediately)
                 sts = mfxENC.EncodeFrameAsync(NULL, NULL, &pTasks[nTaskIdx].mfxBS, &pTasks[nTaskIdx].syncp);
@@ -259,12 +258,10 @@ sts = mfxDEC.DecodeFrameAsync(NULL, pSurfaces[nIndex], &pmfxOutSurface, &syncpD)
                 if (MFX_ERR_NONE < sts && !pTasks[nTaskIdx].syncp) { // Repeat the call if warning and no output
                     if (MFX_WRN_DEVICE_BUSY == sts)
                         MSDK_SLEEP(1);  // Wait if device is busy
-                }
-                else if (MFX_ERR_NONE < sts && pTasks[nTaskIdx].syncp) {
+                } else if (MFX_ERR_NONE < sts && pTasks[nTaskIdx].syncp) {
                     sts = MFX_ERR_NONE; // Ignore warnings if output is available
                     break;
-                }
-                else
+                } else
                     break;
             }
         }
@@ -272,7 +269,7 @@ sts = mfxDEC.DecodeFrameAsync(NULL, pSurfaces[nIndex], &pmfxOutSurface, &syncpD)
 ```
 
  - We also need to add a **4th stage** to our transcode process in order to ensure all tasks in our task pool are synchronised and all output from the encoder gets written to disk.
-```
+``` cpp
     //
     // Stage 4: Sync all remaining tasks in task pool
     //
@@ -295,11 +292,11 @@ sts = mfxDEC.DecodeFrameAsync(NULL, pSurfaces[nIndex], &pmfxOutSurface, &syncpD)
 ```
 
  - Finally we need cleanup our task buffers and task pool. Replace the following line of code:
-```
+``` cpp
     MSDK_SAFE_DELETE_ARRAY(mfxEncBS.Data);
 ```
 with this:
-```
+``` cpp
     for (int i = 0; i < taskPoolSize; i++)
         MSDK_SAFE_DELETE_ARRAY(pTasks[i].mfxBS.Data);
     MSDK_SAFE_DELETE_ARRAY(pTasks);
@@ -313,3 +310,269 @@ with this:
 ```
 
  - Once again **Build** the solution and run the **Performance Profiler**. Note the **execution time** and again take a look at the **GPU Utilization** graph. You will notice that performance has increased and the GPU is better utilised now we are performing more asynchronous operations.
+
+## Video Post Processing (VPP)
+Often the reason for transcoding is because you want to change the input source in some way, be it codec, color space, resolution or filtering. The Intel(R) Media SDK offers several processing modules for this purpose which can be added to the pipeline. We will now look at adding a resize module to our transcode pipeline to lower the 4K input stream to 1080p before encoding. The transcode pipeline will then be as follows: **Decode -> VPP -> Encode**
+
+ - We start by creating a VPP instance for our Intel(R) Media SDK session.
+``` cpp
+    MFXVideoVPP mfxVPP(session);
+```
+ - Next we need to set our VPP parameters to tell the SDK what the expected input and desired output of the VPP module should be. Add the following code to the top of **section 5**:
+``` cpp
+    mfxVideoParam VPPParams;
+    memset(&VPPParams, 0, sizeof(VPPParams));
+    // Input data
+    VPPParams.vpp.In.FourCC = MFX_FOURCC_NV12;
+    VPPParams.vpp.In.ChromaFormat = MFX_CHROMAFORMAT_YUV420;
+    VPPParams.vpp.In.CropX = 0;
+    VPPParams.vpp.In.CropY = 0;
+    VPPParams.vpp.In.CropW = mfxDecParams.mfx.FrameInfo.CropW;
+    VPPParams.vpp.In.CropH = mfxDecParams.mfx.FrameInfo.CropH;
+    VPPParams.vpp.In.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
+    VPPParams.vpp.In.FrameRateExtN = 30;
+    VPPParams.vpp.In.FrameRateExtD = 1;
+    VPPParams.vpp.In.Width = MSDK_ALIGN16(VPPParams.vpp.In.CropW);
+    VPPParams.vpp.In.Height =
+        (MFX_PICSTRUCT_PROGRESSIVE == VPPParams.vpp.In.PicStruct) ?
+        MSDK_ALIGN16(VPPParams.vpp.In.CropH) :
+        MSDK_ALIGN32(VPPParams.vpp.In.CropH);
+    // Output data
+    VPPParams.vpp.Out.FourCC = MFX_FOURCC_NV12;
+    VPPParams.vpp.Out.ChromaFormat = MFX_CHROMAFORMAT_YUV420;
+    VPPParams.vpp.Out.CropX = 0;
+    VPPParams.vpp.Out.CropY = 0;
+    VPPParams.vpp.Out.CropW = VPPParams.vpp.In.CropW / 2; // Scaling
+    VPPParams.vpp.Out.CropH = VPPParams.vpp.In.CropH / 2; // Scaling
+    VPPParams.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
+    VPPParams.vpp.Out.FrameRateExtN = 30;
+    VPPParams.vpp.Out.FrameRateExtD = 1;
+    VPPParams.vpp.Out.Width = MSDK_ALIGN16(VPPParams.vpp.Out.CropW);
+    VPPParams.vpp.Out.Height =
+        (MFX_PICSTRUCT_PROGRESSIVE == VPPParams.vpp.Out.PicStruct) ?
+        MSDK_ALIGN16(VPPParams.vpp.Out.CropH) :
+        MSDK_ALIGN32(VPPParams.vpp.Out.CropH);
+    VPPParams.IOPattern = MFX_IOPATTERN_IN_OPAQUE_MEMORY | MFX_IOPATTERN_OUT_OPAQUE_MEMORY;
+    VPPParams.AsyncDepth = mfxDecParams.AsyncDepth;
+```
+ - We need to update the **CropW** and **CropH** encoder parameters to match the output of the VPP module rather than the output of the decoder:
+``` cpp
+    mfxEncParams.mfx.FrameInfo.CropW = VPPParams.vpp.Out.CropW;
+    mfxEncParams.mfx.FrameInfo.CropH = VPPParams.vpp.Out.CropH;
+``` 
+ - Next we add code to query the number of surfaces required for VPP. We have to take into account that VPP requires working surfaces for the input and output of the module.
+``` cpp
+    // Query number of required surfaces for VPP
+    mfxFrameAllocRequest VPPRequest[2];     // [0] - in, [1] - out
+    memset(&VPPRequest, 0, sizeof(mfxFrameAllocRequest) * 2);
+    sts = mfxVPP.QueryIOSurf(&VPPParams, VPPRequest);
+    MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
+```
+ - Currently we use a single array of frame surfaces shared between the decoder and encoder. Now the decoded frames are a different size to those being fed to the encoder we require 2 surface arrays. One set of surfaces will be used by the decoder and VPP input, the other set will be used by the VPP output and encoder. First we need to determine the number of surfaces required in each instance by updating the **nSurfNum** variable and adding a **nSurfNum2** variable as follows:
+``` cpp
+    mfxU16 nSurfNum = DecRequest.NumFrameSuggested + VPPRequest[0].NumFrameSuggested + VPPParams.AsyncDepth;
+    mfxU16 nSurfNum2 = EncRequest.NumFrameSuggested + VPPRequest[1].NumFrameSuggested + VPPParams.AsyncDepth;
+````
+ - Then we add the code to initialise our second surface array:
+``` cpp
+    mfxFrameSurface1** pSurfaces2 = new mfxFrameSurface1 *[nSurfNum2];
+    MSDK_CHECK_POINTER(pSurfaces2, MFX_ERR_MEMORY_ALLOC);
+    for (int i = 0; i < nSurfNum2; i++) {
+        pSurfaces2[i] = new mfxFrameSurface1;
+        MSDK_CHECK_POINTER(pSurfaces2[i], MFX_ERR_MEMORY_ALLOC);
+        memset(pSurfaces2[i], 0, sizeof(mfxFrameSurface1));
+        memcpy(&(pSurfaces2[i]->Info), &(EncRequest.Info), sizeof(mfxFrameInfo));
+    }
+```
+ - We now create an opaque surface allocation structure for VPP as we did for the decoder and encoder.
+``` cpp
+    mfxExtOpaqueSurfaceAlloc extOpaqueAllocVPP;
+    memset(&extOpaqueAllocVPP, 0, sizeof(extOpaqueAllocVPP));
+    extOpaqueAllocVPP.Header.BufferId = MFX_EXTBUFF_OPAQUE_SURFACE_ALLOCATION;
+    extOpaqueAllocVPP.Header.BufferSz = sizeof(mfxExtOpaqueSurfaceAlloc);
+    mfxExtBuffer* pExtParamsVPP = (mfxExtBuffer*)& extOpaqueAllocVPP;
+```
+ - Next we need to attach the surface structures we have created to the relevant parts of our transcode pipeline. That means **pSurfaces** needs to be attached to the **decoder** and **VPP In** and **pSurfaces2** needs to be attached to **VPP Out** and the **encoder**. Replace the current with surface attachment code with the following:
+``` cpp
+    //Attached the surfaces to the decoder output and the VPP input
+    extOpaqueAllocDec.Out.Surfaces = pSurfaces;
+    extOpaqueAllocDec.Out.NumSurface = nSurfNum;
+    extOpaqueAllocDec.Out.Type = DecRequest.Type;
+    memcpy(&extOpaqueAllocVPP.In, &extOpaqueAllocDec.Out, sizeof(extOpaqueAllocDec.Out));
+
+    //Attached the surfaces to the VPP output and the encoder input
+    extOpaqueAllocVPP.Out.Surfaces = pSurfaces2;
+    extOpaqueAllocVPP.Out.NumSurface = nSurfNum2;
+    extOpaqueAllocVPP.Out.Type = EncRequest.Type;
+    memcpy(&extOpaqueAllocEnc.In, &extOpaqueAllocVPP.Out, sizeof(extOpaqueAllocVPP.Out));
+    
+    mfxDecParams.ExtParam = &pExtParamsDec;
+    mfxDecParams.NumExtParam = 1;
+    VPPParams.ExtParam = &pExtParamsVPP;
+    VPPParams.NumExtParam = 1;
+    mfxEncParams.ExtParam = &pExtParamsEnc;
+    mfxEncParams.NumExtParam = 1;
+```
+
+ - Then we initialise our VPP module in the same way we initialise the decoder and encoder:
+``` cpp
+    // Initialize Media SDK VPP
+    sts = mfxVPP.Init(&VPPParams);
+    MSDK_IGNORE_MFX_STS(sts, MFX_WRN_PARTIAL_ACCELERATION);
+    MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
+```
+
+ - We are now ready to modify our main transcoding loops to incorporate VPP. Firstly we need to add another **mfxSyncPoint** for VPP:
+``` cpp
+    mfxSyncPoint syncpD, syncpE, syncpV;
+```
+
+ - We also need to add a second index to keep track of surfaces in the second surface array we added earlier **pSurfaces2**:
+``` cpp
+    int nIndex2 = 0;
+```
+
+ - We will now look at **stage 1** which is our main transcoding loop. The first section which fills our task pool remains unchanged. We only need to insert the VPP processing loop after decoding and modify the encoding process to ensure it is using surfaces from the correct surface pool and is encoding the output from VPP, not the decoder. Update the current code with the code below:
+``` cpp
+            if (MFX_ERR_NONE == sts) {
+                nIndex2 = GetFreeSurfaceIndex(pSurfaces2, nSurfNum2);  // Find free frame surface
+                MSDK_CHECK_ERROR(MFX_ERR_NOT_FOUND, nIndex2, MFX_ERR_MEMORY_ALLOC);
+
+                for (;;) {
+                    // Process a frame asychronously (returns immediately)
+                    sts = mfxVPP.RunFrameVPPAsync(pmfxOutSurface, pSurfaces2[nIndex2], NULL, &syncpV);
+
+                    if (MFX_ERR_NONE < sts && !syncpV) { // Repeat the call if warning and no output
+                        if (MFX_WRN_DEVICE_BUSY == sts)
+                            MSDK_SLEEP(1);  // Wait if device is busy
+                    } else if (MFX_ERR_NONE < sts && syncpV) {
+                        sts = MFX_ERR_NONE; // Ignore warnings if output is available
+                        break;
+                    } else
+                        break;  // Not a warning
+                }
+
+				// VPP needs more data, let decoder decode another frame as input
+				if (MFX_ERR_MORE_DATA == sts) {
+					continue;
+				} else if (MFX_ERR_MORE_SURFACE == sts) {
+					break;
+				} else
+					MSDK_BREAK_ON_ERROR(sts);
+
+                for (;;) {
+                    // Encode a frame asychronously (returns immediately)
+                    sts = mfxENC.EncodeFrameAsync(NULL, pSurfaces2[nIndex2], &pTasks[nTaskIdx].mfxBS, &pTasks[nTaskIdx].syncp);
+
+                    if (MFX_ERR_NONE < sts && !pTasks[nTaskIdx].syncp) { // Repeat the call if warning and no output
+                        if (MFX_WRN_DEVICE_BUSY == sts)
+                            MSDK_SLEEP(1);  // Wait if device is busy
+                    } else if (MFX_ERR_NONE < sts && pTasks[nTaskIdx].syncp) {
+                        sts = MFX_ERR_NONE; // Ignore warnings if output is available
+                        break;
+                    } else
+                        break;
+                }
+
+                if (MFX_ERR_MORE_DATA == sts) {
+                    // MFX_ERR_MORE_DATA indicates encoder needs more input, request more surfaces from previous operation
+                    sts = MFX_ERR_NONE;
+                    continue;
+                }
+            }
+```
+
+ - In **stage 2** we are once again draining our decoder pipeline. The VPP and encode sections remain unchanged so update the code here with the code above as you did for **stage 1**.
+ 
+ - As we have added VPP to our pipeline we need to add a new stage to our transcoding process to drain the VPP pipeline in the same way we do for the decoder in **stage 2** and the encoder in **stage 3**.  Add the following code in between **stage 2** and **stage 3**:
+``` cpp
+    //
+    // Stage 3: Retrieve buffered frames from VPP
+    //
+    while (MFX_ERR_NONE <= sts || MFX_ERR_MORE_DATA == sts || MFX_ERR_MORE_SURFACE == sts) {
+        nTaskIdx = GetFreeTaskIndex(pTasks, taskPoolSize);      // Find free task
+        if (MFX_ERR_NOT_FOUND == nTaskIdx) {
+            // No more free tasks, need to sync
+            sts = session.SyncOperation(pTasks[nFirstSyncTask].syncp, 60000);
+            MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
+
+            sts = WriteBitStreamFrame(&pTasks[nFirstSyncTask].mfxBS, fSink);
+            MSDK_BREAK_ON_ERROR(sts);
+
+            pTasks[nFirstSyncTask].syncp = NULL;
+            pTasks[nFirstSyncTask].mfxBS.DataLength = 0;
+            pTasks[nFirstSyncTask].mfxBS.DataOffset = 0;
+            nFirstSyncTask = (nFirstSyncTask + 1) % taskPoolSize;
+
+            ++nFrame;
+            printf("Frame number: %d\r", nFrame);
+            fflush(stdout);
+        } else {
+            nIndex2 = GetFreeSurfaceIndex(pSurfaces2, nSurfNum2); // Find free frame surface
+            MSDK_CHECK_ERROR(MFX_ERR_NOT_FOUND, nIndex2, MFX_ERR_MEMORY_ALLOC);
+
+			for (;;) {
+				// Process a frame asychronously (returns immediately)
+				sts = mfxVPP.RunFrameVPPAsync(NULL, pSurfaces2[nIndex2], NULL, &syncpV);
+
+				if (MFX_ERR_NONE < sts && !syncpV) { // Repeat the call if warning and no output
+					if (MFX_WRN_DEVICE_BUSY == sts)
+						MSDK_SLEEP(1);  // Wait if device is busy
+				} else if (MFX_ERR_NONE < sts && syncpV) {
+					sts = MFX_ERR_NONE; // Ignore warnings if output is available
+					break;
+				} else
+					break; // Not a warning
+			}
+
+			if (MFX_ERR_MORE_SURFACE == sts) {
+				break;
+			} else
+				MSDK_BREAK_ON_ERROR(sts);
+
+            for (;;) {
+                // Encode a frame asychronously (returns immediately)
+                sts = mfxENC.EncodeFrameAsync(NULL, pSurfaces2[nIndex2], &pTasks[nTaskIdx].mfxBS, &pTasks[nTaskIdx].syncp);
+
+                if (MFX_ERR_NONE < sts && !pTasks[nTaskIdx].syncp) { // Repeat the call if warning and no output
+                    if (MFX_WRN_DEVICE_BUSY == sts)
+                        MSDK_SLEEP(1);  // Wait if device is busy
+                } else if (MFX_ERR_NONE < sts && pTasks[nTaskIdx].syncp) {
+                    sts = MFX_ERR_NONE; // Ignore warnings if output is available
+                    break;
+                } else
+                    break;
+            }
+
+            if (MFX_ERR_MORE_DATA == sts) {
+                // MFX_ERR_MORE_DATA indicates encoder need more input, request more surfaces from previous operation
+                sts = MFX_ERR_NONE;
+                continue;
+            }
+        }
+    }
+
+    // MFX_ERR_MORE_DATA indicates that all VPP buffers has been fetched, exit in case of other errors
+    MSDK_IGNORE_MFX_STS(sts, MFX_ERR_MORE_DATA);
+    MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
+```
+
+ - You may want to update the remaining stages to **stage 4** which drains our encoding pipeline and **stage 5** which synchronises remaining tasks in the pool. These require no code changes.
+
+ - Finally we need to update our cleanup code. Firstly we need to make sure our VPP instance gets destroyed:
+``` cpp
+    mfxVPP.Close();
+```
+ - Then we make sure the surfaces in our second surface pool are deleted:
+``` cpp
+    for (int i = 0; i < nSurfNum2; i++)
+        delete pSurfaces2[i];
+    MSDK_SAFE_DELETE_ARRAY(pSurfaces2);
+```
+
+ - **Build** the solution and once again use the **Performance Profiler** to run the application. Note the **execution time** before closing the console window. You should notice from the **GPU Utilization** graph that the GPU is slightly more utilised due to the additional processing taking place to scale the video frames. You should also see that overall execution time is much faster as we are now encoding a 1080p stream instead of 4K.
+
+ - To view the encoded output you can use the provided **ffplay** utility. To do so open a **Command Prompt** window and **'cd'** to the **Retail_Workshop** directory. From there run the following command:
+```
+ffplay.exe out.h264
+```
