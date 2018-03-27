@@ -624,3 +624,9 @@ So far we have been working with H.264 video streams but if we want to transcode
 ffplay.exe out.h264
 ffplay.exe out.h265
 ```
+> If you missed some steps or didn't have time to finish the tutorial the completed code is available in the **msdk_transcode_final** directory.
+
+## Conclusion
+In this tutorial we looked at the Intel(R) Media SDK transcoding pipeline (Decode -> VPP -> Encode) and ways to optimally utilise the GPU for this task. We used opaque memory, a feature of the Intel(R) Media SDK to optimally manage surface memory allocation for best performance. We also looked at the advantages of implementing an asynchronous pipeline to better utilise the GPU and increase performance. Finally we explored using modern codecs supported by Intel platforms and the Intel(R) Media SDK such as HEVC to reduce the bitrate of video streams for situations where bandwidth or storage is constrained.
+
+## Next Tutorial
