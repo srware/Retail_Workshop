@@ -1,3 +1,4 @@
+
 # Decoding a video stream using Intel(R) Media SDK
 In this tutorial you will learn the basic principles behind decoding a video stream using the Intel(R) Media SDK. You will understand how to configure the Intel(R) Media SDK pipeline to decode a 4K 30fps AVC stream initially using a software decode implementation and then optimising the code to utilise hardware based decoding.
 
@@ -128,3 +129,11 @@ The current code uses **system memory** for the working surfaces as this is the 
  - Click on **View Details** in the **GPU Usage** window as you did previously. Note that the **GPU VIDEO_DECODE** engine graph is now a much more constant line indicating that we are getting maximum performance from the hardware.
 
 ![Optimised GPU Decode](images/msdk_decode_14.jpg)
+
+> If you missed some steps or didn't have time to finish the tutorial the completed code is available in the **msdk_decode_final** directory.
+
+## Conclusion
+In this tutorial we looked at the Intel(R) Media SDK decoding pipeline and ways to optimise decoding performance on Intel platforms. We explored the performance and power advantages with decoding using the GPU rather than using a software based decoder running on the CPU. We also looked at the advantages of using video memory for our working surfaces instead of system memory to avoid unnecessary memory transfers.
+
+## Next Tutorial
+[Transcoding a video stream using Intel(R) Media SDK](02-media_sdk_transcode.md)
