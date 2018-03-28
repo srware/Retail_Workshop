@@ -88,7 +88,7 @@ The current code uses **system memory** for the working surfaces as this is the 
 
 ![Modify Definitions](images/msdk_decode_12.jpg)
 
- - We now need to create a variable for the external allocator and pass this into our **Initialize** function.
+ - We now need to create a variable for the external allocator and pass this into our existing **Initialize** function.
 ``` cpp
     mfxFrameAllocator mfxAllocator;
     sts = Initialize(impl, ver, &session, &mfxAllocator);
@@ -97,8 +97,6 @@ The current code uses **system memory** for the working surfaces as this is the 
 ```
     mfxVideoParams.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
 ```
-
-
  - We now need to use our new allocator when allocating surface memory for our decoder. Replace **Section 5** with the code below.
 ```
     //5. Allocate surfaces for decoder
@@ -116,12 +114,14 @@ The current code uses **system memory** for the working surfaces as this is the 
         pmfxSurfaces[i]->Data.MemId = mfxResponse.mids[i];      // MID (memory id) represents one video NV12 surface
     }
 ```
-
- - Finally we need to make sure our allocator is destroyed once decoding is finished. Add the following line of code after the surface deletion for loop in **section 8**:
+ - Finally we need to make sure our allocator is destroyed once decoding is finished. Add the following line of code after the surface deletion *for loop* in **section 8**:
 ```
     mfxAllocator.Free(mfxAllocator.pthis, &mfxResponse);
 ```
-
+ - We can also **remove** the following line from our cleanup code as it is no longer required:
+```
+    MSDK_SAFE_DELETE_ARRAY(surfaceBuffers);
+```
  - Once again **build** the project and run the **Performance Profiler** as before. Note the **execution time** before closing the console window which should now be significantly improved. Also notice the **GPU** is now **fully utilised** whilst the application is running as it is no longer having to wait for frames to be copied from system memory.
 
 ![GPU Usage](images/msdk_decode_13.jpg)
