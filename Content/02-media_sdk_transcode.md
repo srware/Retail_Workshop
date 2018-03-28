@@ -630,3 +630,4 @@ ffplay.exe out.h265
 In this tutorial we looked at the Intel(R) Media SDK transcoding pipeline (Decode -> VPP -> Encode) and ways to optimally utilise the GPU for this task. We used opaque memory, a feature of the Intel(R) Media SDK to optimally manage surface memory allocation for best performance. We also looked at the advantages of implementing an asynchronous pipeline to better utilise the GPU and increase performance. Finally we explored using modern codecs supported by Intel platforms and the Intel(R) Media SDK such as HEVC to reduce the bitrate of video streams for situations where bandwidth or storage is constrained.
 
 ## Next Tutorial
+[Intel(R) Media Accelerator Reference Software (M.A.R.S)](03-media_accelerator_reference_software.md)
