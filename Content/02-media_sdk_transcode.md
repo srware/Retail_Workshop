@@ -151,9 +151,6 @@ To better utilise the GPU we can make our transcode pipeline asynchronous so mor
 ```
  - We now need to modify our transcoding loops to first execute multiple tasks asynchronously and once the task pool is full synchronise the pipeline. The main transcoding loop **(Stage 1)** should now look like this:
 ``` cpp
-    //
-    // Stage 1: Main transcoding loop
-    //
     while (MFX_ERR_NONE <= sts || MFX_ERR_MORE_DATA == sts || MFX_ERR_MORE_SURFACE == sts) {
         nTaskIdx = GetFreeTaskIndex(pTasks, taskPoolSize);  // Find free task
         if (MFX_ERR_NOT_FOUND == nTaskIdx) {
@@ -219,9 +216,12 @@ To better utilise the GPU we can make our transcode pipeline asynchronous so mor
             }
         }
     }
+
+    MSDK_IGNORE_MFX_STS(sts, MFX_ERR_MORE_DATA);
+    MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
 ```
 
- - **Stage 2** should be the same as the main transcoding loop above with the exception that we pass **NULL** to the **DecodeFrameAsync** call in order to drain the decoding pipeline.
+ - **Stage 2** should be the same as **stage 1** with the exception that we pass **NULL** to the **DecodeFrameAsync** call in order to drain the decoding pipeline. Update **stage 2** with the code above and then make the required modification using the code below as a reference.
 ``` cpp
 sts = mfxDEC.DecodeFrameAsync(NULL, pSurfaces[nIndex], &pmfxOutSurface, &syncpD);
 ```
@@ -267,8 +267,7 @@ sts = mfxDEC.DecodeFrameAsync(NULL, pSurfaces[nIndex], &pmfxOutSurface, &syncpD)
         }
     }
 ```
-
- - We also need to add a **4th stage** to our transcode process in order to ensure all tasks in our task pool are synchronised and all output from the encoder gets written to disk.
+ - We also need to **add a 4th stage** to our transcode process in order to ensure all tasks in our task pool are synchronised and all output from the encoder gets written to disk.
 ``` cpp
     //
     // Stage 4: Sync all remaining tasks in task pool
@@ -482,7 +481,7 @@ Often the reason for transcoding is because you want to change the input source 
             }
 ```
 
- - In **stage 2** we are once again draining our decoder pipeline. The VPP and encode sections remain unchanged so update the code here with the code above as you did for **stage 1**.
+ - In **stage 2** we are once again draining our decoder pipeline. The VPP and encode sections should once again be the same as **stage 1** so update the code here with the code above.
  
  - As we have added VPP to our pipeline we need to add a new stage to our transcoding process to drain the VPP pipeline in the same way we do for the decoder in **stage 2** and the encoder in **stage 3**.  Add the following code in between **stage 2** and **stage 3**:
 ``` cpp
