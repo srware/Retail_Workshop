@@ -132,6 +132,48 @@ The current code uses **system memory** for the working surfaces as this is the 
 
 > If you missed some steps or didn't have time to finish the tutorial the completed code is available in the **msdk_decode_final** directory.
 
+## HEVC 4K 10-bit
+"What about the latest 4K 10-bit HEVC video streams" I hear you ask? Support for both decode and encode of such streams was introduced with 7th Gen Intel(R) Core(TM) Processors and the Intel(R) Media SDK has full support for both. We will now make the small code modifications necessary to decode a sample 4K 10-bit HEVC stream.
+
+ - Firstly we need to update our input source to the 4K 10-bit HEVC sample. This sample has an average bitrate of over 40Mbps, similar to that of a 4K Ultra HD Blu-ray.
+``` cpp
+    char path[] = "..\\jellyfish-60-mbps-4k-uhd-hevc-10bit.h265";
+```
+ - Next we update the codec in our decode video parameters from **MFX_CODEC_AVC** to **MFX_CODEC_HEVC**.
+``` cpp
+    mfxVideoParams.mfx.CodecId = MFX_CODEC_HEVC;
+```
+ - HEVC support is provided as a plugin to the Intel(R) Media SDK which needs to be manually loaded at runtime. Add the following code to **section 3** to load the HEVC plugin.
+```
+    // Load the HEVC plugin
+    mfxPluginUID codecUID;
+    bool success = true;
+    codecUID = msdkGetPluginUID(impl, MSDK_VDECODE, mfxVideoParams.mfx.CodecId);
+
+    if (AreGuidsEqual(codecUID, MSDK_PLUGINGUID_NULL)) {
+        printf("Failed to get plugin UID for HEVC.\n");
+        success = false;
+    }
+
+    printf("Loading HEVC plugin: %s\n", ConvertGuidToString(codecUID));
+
+    // If we successfully got the UID, load the plugin
+    if (success) {
+        sts = MFXVideoUSER_Load(session, &codecUID, ver.Major);
+        if (sts < MFX_ERR_NONE) {
+            printf("Loading HEVC plugin failed!\n");
+            success = false;
+        }
+    }
+```
+ - Before we proceed to test the code let's try playing the sample using the **ffplay** utility using only the CPU. To do so open a **Command Prompt** window and **'cd'** to the **Retail_Workshop** directory. From there run the following command:
+```
+ffplay.exe jellyfish-60-mbps-4k-uhd-hevc-10bit.h265
+```
+> Use the **Esc** key to stop playback at any time.
+
+ - You will notice the CPU alone is struggling to decode the high bitrate stream fast enough to render at a smooth 30fps. Go back to your **Visual Studio** window and **Build** the solution ensuring there are no errors. Then once again use the **Performance Profiler** to run the code. Note the **execution time** before closing the console window and check that the GPU was indeed used to decode the stream by checking the **CPU** and **GPU** utilisation graphs. As you can see the GPU decoding performance comfortably fulfills the 30fps requirement for smooth playback.
+
 ## Conclusion
 In this tutorial we looked at the Intel(R) Media SDK decoding pipeline and ways to optimise decoding performance on Intel platforms. We explored the performance and power advantages with decoding using the GPU rather than using a software based decoder running on the CPU. We also looked at the advantages of using video memory for our working surfaces instead of system memory to avoid unnecessary memory transfers.
 

@@ -575,6 +575,8 @@ Often the reason for transcoding is because you want to change the input source 
 ```
 ffplay.exe out.h264
 ```
+> Use the **Esc** key to stop playback at any time.
+
 ## HEVC Encoding
 So far we have been working with H.264 video streams but if we want to transcode our stream using a more efficient codec we can use the newer HEVC (H.265) codec which can produce the same perceived quality at lower bitrates which in turn leads to smaller file sizes. The trade-off is longer encoding time.
 
@@ -618,7 +620,7 @@ So far we have been working with H.264 video streams but if we want to transcode
 
 ![HEVC](images/msdk_transcode_5.jpg)
 
- - You can use the **ffplay** utility as you did before to play both files and compare the output.
+ - You can use the **ffplay** utility as you did before to play both files and compare the output. Use the **Esc** key to stop playback at any time.
 ```
 ffplay.exe out.h264
 ffplay.exe out.h265
