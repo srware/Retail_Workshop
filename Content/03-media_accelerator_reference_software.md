@@ -4,3 +4,19 @@ using the Intel(R) Media SDK for digital signage use-case. M.A.R.S is licensed r
 
 > The M.A.R.S source code can be obtained via the Intel(R) Registration Center. Please ask for more details.
 
+M.A.R.S supports WIndows 10, 64-bit and runs on the following Intel platforms:
+
+ - Intel(R) 6th Generation Core
+ - Intel(R) 7th Generation Core
+ - Intel(R) Atom(R) Processor (Formerly Apollo Lake)
+ - Intel(R) Atom(R) Processor (Formerly Braswell)
+
+A few of the key features of M.A.R.S are listed below:
+
+ - Support for multiple monitors (e.g. video wall)
+ - Portrait & landscape support
+ - Multiple zones
+ - Various content supported (Video, Audio, Image, RSS, Plain Text)
+ - Configuration GUI
+> For more information on M.A.R.S you will find the user guide in the **Retail_Workshop** directory.
+
