@@ -61,14 +61,17 @@ Next we need to tell M.A.R.S what content to play in this zone. To do this click
 
 ![MARS Main Zone File](images/mars_main_zone_file.jpg)
 
-Before we test click the **Save** button in the bottom pane of the M.A.R.S interface which will load an explorer window. Give you configuration file a name and click **Save**. This will save your configuration in XML format to disk so you can reload it into M.A.R.S at any time.
+Before we test click the **Save** button in the bottom pane of the M.A.R.S interface which will load an explorer window. Give your configuration file a name and click **Save**. This will save your configuration in XML format to disk so you can reload it into M.A.R.S at any time.
+
 >**Note:** It doesn't matter where you save the configuration file as long as you know where it is but I would recommend saving to the **Desktop** to avoid confusion.
 
-Now we can test our current configuration by clicking the **Finish** button in the M.A.R.S interface. Right now we have a very simple video player, so let's add some more zones. To get back to the configuration GUI press **'s'** on your keyboard.
+Now we can test our current configuration by clicking the **Finish** button in the M.A.R.S interface. Right now we have a very simple video player, so let's add some more zones. 
 
-Next we will add a second video zone to display additional content in top left corner. Add a second zone by clicking the **Add Zone** button. You can make this zone as big or small as you like but I would recommend setting **Height** to **540** and **Width** to **960** in the zone configuration to maintain the correct aspect ratio of the video.
+> To get back to the configuration GUI press the **"s"** key on your keyboard.
 
-![MARS Zone 2 Size](images/mars_zone2_size.jpg)
+Next we will add a second video zone to display additional content in the top left corner. Add a second zone by clicking the **Add Zone** button. You can make this zone as big or small as you like but I would recommend setting **Height** to **540** and **Width** to **960** in the zone configuration to maintain the correct aspect ratio of the video.
+
+![MARS Zone 2 Size](images/mars_zone2_resize.jpg)
 
 As this zone will be overlapping with our main video zone we can add a border to help it stand out. To do this set the **Border** configuration option to **ON**. This will give you some additional configuration options. Set the **Thickness** parameter to **4**.
 
@@ -78,9 +81,11 @@ Finally we need to set the content for the zone. This time select the **bbb_sunf
 
 ![MARS Zone 2 Complete](images/mars_zone2_complete.jpg)
 
-Click **Save** and **Finish** to test your configuration. When you are done go back into the configuration GUI by pressing **"s"** on your keyboard.
+Click **Save** and **Finish** to test your configuration.
 
-Next we will add an **RSS Feed** to display dynamic content along the bottom of the screen. To do this click the **Add Zone** button to add a third zone to our layout. Drag this zone to the bottom left corner of the screen and then resize it to entire width of the display by dragging the right edge of the zone. Resize the height of the zone by dragging from the top edge to make it as thin as possible. You can also manually set the **Height** to **85** and **Width** to **3840** in the zone configuration pane. Your layout should now look like the screenshot below.
+> To get back to the configuration GUI press the **"s"** key on your keyboard.
+
+Next we will add an **RSS Feed** to display dynamic content along the bottom of the screen. To do this click the **Add Zone** button to add a third zone to your layout. Drag this zone to the bottom left corner of the screen and then resize it to the entire width of the display by dragging the right edge of the zone. Resize the height of the zone by dragging from the top edge to make it as thin as possible. You can also manually set the **Height** to **83** and **Width** to **3840** in the zone configuration pane. Your layout should now look like the screenshot below.
 
  ![MARS Zone 3 Complete](images/mars_zone3_complete.jpg)
 
@@ -91,6 +96,7 @@ We now need to configure **Zone 3**. Update the following zone configuration par
  - **Font Size:** 40
  - **Font Style:** Normal
  - **Scroll Direction:** Horizontal
+
 > Set the **Text Color** and **Text Background Color** to whatever you wish.
 
 ![MARS Zone 3 Config](images/mars_zone3_config.jpg)
