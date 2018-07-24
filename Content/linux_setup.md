@@ -16,8 +16,8 @@ sudo apt-get -y install git libssl-dev dh-autoreconf cmake libgl1-mesa-dev libpc
 ```
 Create a working directory and export the path:
 ``` bash
-mkdir <path-to-working-directory>
-export WORKDIR=<path-to-working-directory>
+mkdir -p $HOME/build-media-sdk
+export WORKDIR=$HOME/build-media-sdk
 ```
 
 ## libVA
