@@ -42,3 +42,58 @@ git checkout 8a6ef9ed905c0d9d5463c17c76609dba5dfb9c15
 make -j4
 sudo make install
 ```
+## Intel(R) Media Driver for VAAPI
+Run the following commands to build the Media Driver for VAAPI:
+``` bash
+cd $WORKDIR
+git clone https://github.com/intel/gmmlib.git
+git clone https://github.com/intel/media-driver.git
+cd $WORKDIR/gmmlib
+git checkout a5015343bc932e39747c57ea5dec0cbf28685465
+cd $WORKDIR/media-driver
+git checkout ab264dd51f20ea83d6c40a886fb685ce372c47ba
+mkdir -p $WORKDIR/build
+cd $WORKDIR/build
+cmake ../media-driver -DMEDIA_VERSION="2.0.0" \
+-DBUILD_ALONG_WITH_CMRTLIB=1 \
+-DBS_DIR_GMMLIB=`pwd`/../gmmlib/Source/GmmLib/ \
+-DBS_DIR_COMMON=`pwd`/../gmmlib/Source/Common/ \
+-DBS_DIR_INC=`pwd`/../gmmlib/Source/inc/ \
+-DBS_DIR_MEDIA=`pwd`/../media-driver \
+-DCMAKE_INSTALL_PREFIX=/usr \
+-DCMAKE_INSTALL_LIBDIR=/usr/lib/x86_64-linux-gnu \
+-DINSTALL_DRIVERS_SYSCONF=OFF \
+-DLIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+make -j8
+sudo make install
+export LIBVA_DRIVER_NAME=iHD
+export LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+```
+## Media SDK
+Run the following commands to build and install the Media SDK:
+``` bash
+cd $WORKDIR
+git clone https://github.com/Intel-Media-SDK/MediaSDK.git
+cd MediaSDK
+git checkout 6941f032b754f7ee85fae36bbca5efe9669b9fcf
+export MFX_HOME=`pwd`
+perl tools/builder/build_mfx.pl --cmake=intel64.make.release
+make -C __cmake/intel64.make.release/ -j4
+cd __cmake/intel64.make.release
+sudo make install
+```
+You can check everything is working as expected by running the 'vainfo' utility which will give an output similar to below in a working environment:
+``` bash
+libva info: VA-API version 1.1.0
+libva info: va_getDriverName() returns 0
+libva info: User requested driver 'iHD'
+libva info: Trying to open /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
+libva info: Found init function __vaDriverInit_1_1
+libva info: va_openDriver() returns 0
+vainfo: VA-API version: 1.1 (libva 2.1.1.pre1)
+vainfo: Driver version: Intel iHD driver - 2.0.0
+```
+## Additional Tools
+Run the below command to install some additional packages required to complete the tutorials:
+``` bash
+sudo apt install ffmpeg intel-gpu-tools
