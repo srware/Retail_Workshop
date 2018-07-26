@@ -98,4 +98,6 @@ Run the below command to install some additional packages required to complete t
 ``` bash
 sudo apt install ffmpeg intel-gpu-tools htop
 ```
+> You will also need to install your preferred **text editor** (e.g. Brackets, vim)
+
 > **Secure Boot should be disabled in the BIOS in order for Intel GPU analysis tools to work.**
