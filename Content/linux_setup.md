@@ -96,4 +96,6 @@ vainfo: Driver version: Intel iHD driver - 2.0.0
 ## Additional Tools
 Run the below command to install some additional packages required to complete the tutorials:
 ``` bash
-sudo apt install ffmpeg intel-gpu-tools
+sudo apt install ffmpeg intel-gpu-tools htop
+```
+> **Secure Boot should be disabled in the BIOS in order for Intel GPU analysis tools to work.**
