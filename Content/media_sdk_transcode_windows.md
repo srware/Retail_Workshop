@@ -1,5 +1,5 @@
 
-# Transcoding a video stream using Intel(R) Media SDK
+# Transcoding a video stream using Intel(R) Media SDK (Windows)
 In this tutorial we will look at a simple transcode (decode + encode) pipeline using the Intel(R) Media SDK. We will start with a basic example using system memory for working surfaces before exploring ways of improving the performance of the transcode process using features such as opaque memory and asynchronous operation. We will also look at adding a video frame processing (VPP) resize to the transcode process.
 
 ## Getting Started
@@ -631,4 +631,4 @@ ffplay.exe out.h265
 In this tutorial we looked at the Intel(R) Media SDK transcoding pipeline (Decode -> VPP -> Encode) and ways to optimally utilise the GPU for this task. We used opaque memory, a feature of the Intel(R) Media SDK to optimally manage surface memory allocation for best performance. We also looked at the advantages of implementing an asynchronous pipeline to better utilise the GPU and increase performance. Finally we explored using modern codecs supported by Intel platforms and the Intel(R) Media SDK such as HEVC to reduce the bitrate of video streams for situations where bandwidth or storage is constrained.
 
 ## Next Tutorial
-[Intel(R) Media Accelerator Reference Software (M.A.R.S)](03-media_accelerator_reference_software.md)
+[Intel(R) Media Accelerator Reference Software (M.A.R.S)](media_accelerator_reference_software_windows.md)
