@@ -130,8 +130,6 @@ The current code uses **system memory** for the working surfaces as this is the 
 
 ![Optimised GPU Decode](images/msdk_decode_14.jpg)
 
-> If you missed some steps or didn't have time to finish the tutorial the completed code is available in the **msdk_decode_final** directory.
-
 ## HEVC 4K 10-bit
 "What about the latest 4K 10-bit HEVC video streams" I hear you ask? Support for both decode and encode of such streams was introduced with 7th Gen Intel(R) Core(TM) Processors and the Intel(R) Media SDK has full support for both. We will now make the small code modifications necessary to decode a sample 4K 10-bit HEVC stream.
 
@@ -173,6 +171,8 @@ ffplay.exe jellyfish-60-mbps-4k-uhd-hevc-10bit.h265
 > Use the **Esc** key to stop playback at any time.
 
  - You will notice the CPU alone is struggling to decode the high bitrate stream fast enough to render at a smooth 30fps. Go back to your **Visual Studio** window and **Build** the solution ensuring there are no errors. Then once again use the **Performance Profiler** to run the code. Note the **execution time** before closing the console window and check that the GPU was indeed used to decode the stream by checking the **CPU** and **GPU** utilisation graphs. As you can see the GPU decoding performance comfortably fulfills the 30fps requirement for smooth playback.
+ 
+> If you missed some steps or didn't have time to finish the tutorial the completed code is available in the **msdk_decode_final** directory.
 
 ## Conclusion
 In this tutorial we looked at the Intel(R) Media SDK decoding pipeline and ways to optimise decoding performance on Intel platforms. We explored the performance and power advantages with decoding using the GPU rather than using a software based decoder running on the CPU. We also looked at the advantages of using video memory for our working surfaces instead of system memory to avoid unnecessary memory transfers.
