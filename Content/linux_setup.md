@@ -1,4 +1,4 @@
-# Intel(R) Media SDK 2018 Q2.1 Installation (Ubuntu 16.04)
+# Intel(R) Media SDK Installation (Ubuntu 16.04)
 There are several components which need to be installed in order to use the Media SDK on Linux:
  - [libVA API](https://github.com/intel/libva)
  - [Intel(R) Graphics Memory Management Library](https://github.com/intel/gmmlib)
@@ -26,7 +26,7 @@ Run the following commands to build and install the libVA library:
 cd $WORKDIR
 git clone https://github.com/intel/libva.git
 cd libva
-git checkout d6fd111e2062bb4732db8a05ed55fc01771087b4
+git checkout 2.2.0
 ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu
 make -j4
 sudo make install
@@ -37,7 +37,7 @@ Run the following commands to build and install libVA utils:
 cd $WORKDIR
 git clone https://github.com/intel/libva-utils.git
 cd libva-utils
-git checkout 8a6ef9ed905c0d9d5463c17c76609dba5dfb9c15
+git checkout 2.2.0
 ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu
 make -j4
 sudo make install
@@ -49,9 +49,9 @@ cd $WORKDIR
 git clone https://github.com/intel/gmmlib.git
 git clone https://github.com/intel/media-driver.git
 cd $WORKDIR/gmmlib
-git checkout a5015343bc932e39747c57ea5dec0cbf28685465
+git checkout 5ff84b923ec2ba1572c464dc8def73348571b440
 cd $WORKDIR/media-driver
-git checkout ab264dd51f20ea83d6c40a886fb685ce372c47ba
+git checkout intel-media-18.2.0
 mkdir -p $WORKDIR/build
 cd $WORKDIR/build
 cmake ../media-driver -DMEDIA_VERSION="2.0.0" \
@@ -75,7 +75,7 @@ Run the following commands to build and install the Media SDK:
 cd $WORKDIR
 git clone https://github.com/Intel-Media-SDK/MediaSDK.git
 cd MediaSDK
-git checkout 6941f032b754f7ee85fae36bbca5efe9669b9fcf
+git checkout 3cfe1e06e89aa32102160b621938bbb5bf9a1e53
 export MFX_HOME=`pwd`
 perl tools/builder/build_mfx.pl --cmake=intel64.make.release
 make -C __cmake/intel64.make.release/ -j4
