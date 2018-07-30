@@ -3,7 +3,7 @@
 ## Setup
 
 ### Linux
-[Intel(R) Media SDK 2018 Q2.1 Installation (Ubuntu 16.04)](Content/linux_setup.md)
+[Intel(R) Media SDK Installation (Ubuntu 16.04)](Content/linux_setup.md)
 
 
 ## Media SDK Tutorials
