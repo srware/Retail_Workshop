@@ -18,7 +18,7 @@ sudo intel_gpu_top
 Terminal 3:
 ``` bash
 export MFX_HOME/opt/intel/mediasdk
-cd $HOME/Retail_Workshop/msdk_transcode
+cd $HOME/Retail_Workshop/msdk_decode
 ```
 
 ![Terminal Windows](images/msdk_global_l_01.png)
@@ -118,8 +118,6 @@ The current code uses **system memory** for the working surfaces as this is the 
     MSDK_SAFE_DELETE_ARRAY(surfaceBuffers);
 ```
  - **Build** the code using the **make** command as you did previously and again run the application. Take a look at the CPU and GPU utilisation whilst the application is running. You will see the **CPU usage** is now minimal (assuming nothing else is happening on the system) as we are no longer using shared memory for our working surfaces. Also notice the **GPU** is now **better utilised** as it is no longer having to wait for frames to be copied from system memory. 
-
-![GPU Usage](images/msdk_decode_l_01.png)
 
 - Note the **execution time**, which should now be significantly improved,  before continuing. 
 
