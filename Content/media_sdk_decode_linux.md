@@ -17,7 +17,7 @@ sudo intel_gpu_top
 ```
 Terminal 3:
 ``` bash
-export MFX_HOME/opt/intel/mediasdk
+export MFX_HOME=/opt/intel/mediasdk
 cd $HOME/Retail_Workshop/msdk_decode
 ```
 
