@@ -54,6 +54,7 @@ cd $WORKDIR/media-driver
 git checkout intel-media-18.2.0
 mkdir -p $WORKDIR/build
 cd $WORKDIR/build
+
 cmake ../media-driver -DMEDIA_VERSION="2.0.0" \
 -DBUILD_ALONG_WITH_CMRTLIB=1 \
 -DBS_DIR_GMMLIB=`pwd`/../gmmlib/Source/GmmLib/ \
@@ -64,8 +65,10 @@ cmake ../media-driver -DMEDIA_VERSION="2.0.0" \
 -DCMAKE_INSTALL_LIBDIR=/usr/lib/x86_64-linux-gnu \
 -DINSTALL_DRIVERS_SYSCONF=OFF \
 -DLIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+
 make -j8
 sudo make install
+
 export LIBVA_DRIVER_NAME=iHD
 export LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
 ```
