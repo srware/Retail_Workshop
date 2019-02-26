@@ -112,8 +112,8 @@ Copy the following and add it after the **plugin loading** code from the previou
         netReader.ReadWeights(model + ".bin"); 
 ```
 
- - The next step is to specify what the input and output to the network looks like do that later on sufficient memory can be allocated. This step requires some knowledge of the network layout for the model being used although there are some helper functions provided by the **CNNNetReader** class which allow us to probe the network for the required information.
-	 - The model we are using for face detection expects **input** blobs where the first element contains the string "input" and the second element is an input image in the format [NxCxHxW] where:
+ - The next step is to specify what the input and output to the network looks like so that sufficient memory can be allocated for each **InferRequest**. This step requires some knowledge of the network layout for the model being used although there are some helper functions provided by the **CNNNetReader** class which allow us to probe the network for the required information.
+	 - The model we are using for face detection expects **input** blobs where the first element contains the string "input" and the second element is a shape in the format [NxCxHxW] where:
 		 - **N** is the batch size
 		 - **C** is the number of channels in the image (3 in this case in the order Blue, Green, Red)
 		 - **H** is the height of the image (this model expects an image with a height of 384 pixels)
@@ -261,15 +261,103 @@ The **Main Loop** should now look like this...
 
  - Run the application by pressing **F5** on your keyboard or clicking the **'Local Windows Debugger'** button in the main toolbar.
      
-    - When the output window loads and begins showing the camera frames you will notice that faces are bound by a red box. The value above the box is the confidence level. Run the application for a while and note down the average **FPS** shown in the top left of the output window. In the next section we will look at ways to improve inference performance.
+    - When the output window loads and begins showing the camera frames you will notice that faces are bound by a red box. The value above the box is the confidence level. Run the application for a while and note down the average **fps** shown in the top left of the output window. In the next section we will look at ways to improve inference performance.
  
 ![Application Running](images/openvino_face_detector_ar2.jpg)
 
  - Press the **Esc** to stop the application
 
 ## Asynchronous Inference
+The OpenVINO(TM) Inference Engine supports asynchronous requests which means you can execute the next request whilst processing the output from the current one. This is a good way of improving performance as you don't need to wait for the current request to finish before executing the next.
 
- 
+In this section we will modify our code to execute asynchronously and see how this impacts performance.
+
+ - The first thing we need to do is add a second OpenCV **Mat** object to store an additional camera frame so we are able to work with two frames at once. Add the following code directly under the original **Mat** object.
+
+``` cpp
+        cv::Mat next_frame;
+```
+
+ - The second thing we need to do is add a second **InferRequest** object which we can use for the next request while the current one is being executed. Add the following code directly beneath our original **InferRequest**.
+
+``` cpp
+        InferRequest::Ptr infer_request_next = network.CreateInferRequestPtr();
+```
+
+ - The next thing we need to do is to populate the input of the current **InferRequest** and execute it asynchronously **before** the **Main Loop**. From then on we will only ever populate the input of the **next** request inside the main loop. Add the following code just before the **Main Loop**.
+
+``` cpp
+        /* Resize and copy data from the first camera frame to the current input blob */
+        Blob::Ptr input_blob = infer_request->GetBlob(inputName);
+        matU8ToBlob<uint8_t>(curr_frame, input_blob);
+
+        // Execute the first infer request
+        infer_request->StartAsync();
+ ```
+**Note:** Previously we used the **Infer()** function call on our **InferRequest** which is a blocking call. We are now using the **StartAsync()** call which returns immediately.
+
+ - We now need to make some modification to the **Main Loop**. We no longer want to populate the current **InferRequest** at the start of the loop as this only needs to be done once before the loop begins. We now need to grab the **next** frame from the camera and populate the input for the **next** request at the start of the loop. We can also execute the next request asynchronously before we move on to processing the output from the current request.
+
+Replace this existing code at the start of the **Main Loop**:
+
+``` cpp
+            /* Resize and copy data from the camera frame to the input blob */
+            Blob::Ptr input_blob = infer_request->GetBlob(inputName);
+            matU8ToBlob<uint8_t>(curr_frame, input_blob);
+
+            // Execute the infer request
+            infer_request->Infer();
+ ```
+
+With this:
+
+``` cpp
+            /* Prepare next input blob */
+            if (!cap.read(next_frame)) { // Grab next frame from camera
+                throw std::logic_error("Failed to get frame from camera!");
+            }
+
+            /* Resize and copy the next camera frame to the next input blob */
+            Blob::Ptr input_blob_next = infer_request_next->GetBlob(inputName);
+            matU8ToBlob<uint8_t>(next_frame, input_blob_next);
+
+            // Execute the next infer request while waiting for the current one to complete                
+            infer_request_next->StartAsync();
+```
+
+ - Once we setup and execute the next request we need to wait for the current request to complete before processing the output. To do this we use the **Wait()** call on our current **InferRequest** which blocks the main thread until a result is returned.
+
+``` cpp
+            /* Wait for current infer request to complete */
+            infer_request->Wait(IInferRequest::WaitMode::RESULT_READY);
+```
+
+ - Finally, instead of grabbing the next frame from the camera at the end of the **Main Loop** we need to swap the **current** and **next** requests before the loop starts it's next iteration.
+
+Replace this code near the end of the **Main Loop**:
+
+``` cpp
+            // Grab next frame from the camera
+            if (!cap.read(curr_frame)) {
+                throw std::logic_error("Failed to get frame from camera!");
+            }
+```
+With this:
+
+``` cpp
+            // Swap the next and current requests for the next iteration
+            curr_frame = next_frame;
+            next_frame = cv::Mat();
+            infer_request.swap(infer_request_next);
+```
+
+ - That's all the changes we need to make so we can now **build the solution** once again. Make sure the code built successfully by checking the **Output** log in the bottom left pane.
+
+ - Run the application by pressing **F5** on your keyboard or clicking the **'Local Windows Debugger'** button in the main toolbar. Once again run the application for a while and take note of the average **fps** value which should now be higher than before.
+
+ - Press the **Esc** to stop the application
+
+
 > If you missed some steps or didn't have time to finish the tutorial the completed code is available in the **openvino_face_detection_final** directory.
 
 ## Conclusion
