@@ -41,6 +41,8 @@ The basic flow is outlined below:
  - Make sure the application built successfully by checking the **Output** log in the bottom left pane.
  
 ![Build Check](images/openvino_face_detector_bc.jpg)
+ - Ensure you have a USB camera connected to your host device before continuing.
+ 
  - Run the application by pressing **F5** on your keyboard or clicking the **'Local Windows Debugger'** button in the main toolbar.
      
 ![Run Application](images/openvino_face_detector_ra.jpg)
