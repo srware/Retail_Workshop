@@ -1,6 +1,6 @@
 
-# Decoding a video stream using Intel(R) Media SDK (Windows)
-In this tutorial you will learn the basic principles behind decoding a video stream using the Intel(R) Media SDK. You will understand how to configure the Intel(R) Media SDK pipeline to decode a 4K 30fps AVC stream initially using a software decode implementation and then optimising the code to utilise hardware based decoding. We will also look at decoding a 4K 10-bit HEVC stream.
+# Decoding a video stream using Intel® Media SDK (Windows)
+In this tutorial you will learn the basic principles behind decoding a video stream using the Intel® Media SDK. You will understand how to configure the Intel® Media SDK pipeline to decode a 4K 30fps AVC stream initially using a software decode implementation and then optimising the code to utilise hardware based decoding. We will also look at decoding a 4K 10-bit HEVC stream.
 
 ## Getting Started
 
@@ -55,7 +55,7 @@ The basic flow is outlined below:
 ![CPU Usage](images/msdk_decode_7.jpg)
 
 ## Hardware Decoding
-Where possible we want to use hardware based decoding for improved efficiency and speed. The Intel(R) Media SDK is able to select the best decode implementation based on the platform capabilities, first checking to see if hardware can be used and falling back to software if not.
+Where possible we want to use hardware based decoding for improved efficiency and speed. The Intel® Media SDK is able to select the best decode implementation based on the platform capabilities, first checking to see if hardware can be used and falling back to software if not.
 
  - Change the Media SDK implementation from **'MFX_IMPL_SOFTWARE'** to **'MFX_IMPL_AUTO_ANY**:
 
@@ -73,7 +73,7 @@ Where possible we want to use hardware based decoding for improved efficiency an
 ![GPU Details](images/msdk_decode_9.jpg)
 
 ## Further Optimisation
-The current code uses **system memory** for the working surfaces as this is the implementation provided by the default allocator when creating an Intel(R) Media SDK session. Allocating surfaces in video memory is highly desirable since this eliminates copying them from the system memory to the video memory when decoding leading to improved performance. To achieve this we have to provide an external allocator which is able to manage video memory using DirectX.
+The current code uses **system memory** for the working surfaces as this is the implementation provided by the default allocator when creating an Intel® Media SDK session. Allocating surfaces in video memory is highly desirable since this eliminates copying them from the system memory to the video memory when decoding leading to improved performance. To achieve this we have to provide an external allocator which is able to manage video memory using DirectX.
 
  - Firstly we need to modify our preprocessor definitions to tell the build system we will be using DirectX based memory allocation. **Right-click** on the **msdk_decode** project in the **Solution Explorer** window and select **Properties**
 
@@ -131,7 +131,7 @@ The current code uses **system memory** for the working surfaces as this is the 
 ![Optimised GPU Decode](images/msdk_decode_14.jpg)
 
 ## HEVC 4K 10-bit
-"What about the latest 4K 10-bit HEVC video streams" I hear you ask? Support for both decode and encode of such streams was introduced with 7th Gen Intel(R) Core(TM) Processors and the Intel(R) Media SDK has full support for both. We will now make the small code modifications necessary to decode a sample 4K 10-bit HEVC stream.
+"What about the latest 4K 10-bit HEVC video streams" I hear you ask? Support for both decode and encode of such streams was introduced with 7th Gen Intel® Core™ Processors and the Intel® Media SDK has full support for both. We will now make the small code modifications necessary to decode a sample 4K 10-bit HEVC stream.
 
  - Firstly we need to update our input source to the 4K 10-bit HEVC sample. This sample has an average bitrate of over 40Mbps, similar to that of a 4K Ultra HD Blu-ray.
 ``` cpp
@@ -141,7 +141,7 @@ The current code uses **system memory** for the working surfaces as this is the 
 ``` cpp
     mfxVideoParams.mfx.CodecId = MFX_CODEC_HEVC;
 ```
- - HEVC support is provided as a plugin to the Intel(R) Media SDK which needs to be manually loaded at runtime. Add the following code to **section 3** to load the HEVC plugin.
+ - HEVC support is provided as a plugin to the Intel® Media SDK which needs to be manually loaded at runtime. Add the following code to **section 3** to load the HEVC plugin.
 ```
     // Load the HEVC plugin
     mfxPluginUID codecUID;
@@ -175,7 +175,7 @@ ffplay.exe jellyfish-60-mbps-4k-uhd-hevc-10bit.h265
 > If you missed some steps or didn't have time to finish the tutorial the completed code is available in the **msdk_decode_final** directory.
 
 ## Conclusion
-In this tutorial we looked at the Intel(R) Media SDK decoding pipeline and ways to optimise decoding performance on Intel platforms. We explored the performance and power advantages with decoding using the GPU rather than using a software based decoder running on the CPU. We also looked at the advantages of using video memory for our working surfaces instead of system memory to avoid unnecessary memory transfers.
+In this tutorial we looked at the Intel® Media SDK decoding pipeline and ways to optimise decoding performance on Intel platforms. We explored the performance and power advantages with decoding using the GPU rather than using a software based decoder running on the CPU. We also looked at the advantages of using video memory for our working surfaces instead of system memory to avoid unnecessary memory transfers.
 
 ## Next Tutorial
-[Transcoding a video stream using Intel(R) Media SDK](media_sdk_transcode_windows.md)
+[Transcoding a video stream using Intel® Media SDK](media_sdk_transcode_windows.md)
