@@ -1,8 +1,8 @@
-# Intel(R) Media SDK Installation (Ubuntu 16.04)
+# Intel® Media SDK Installation (Ubuntu 16.04)
 There are several components which need to be installed in order to use the Media SDK on Linux:
  - [libVA API](https://github.com/intel/libva)
- - [Intel(R) Graphics Memory Management Library](https://github.com/intel/gmmlib)
- - [Intel(R) Media Driver for VAAPI](https://github.com/intel/media-driver)
+ - [Intel® Graphics Memory Management Library](https://github.com/intel/gmmlib)
+ - [Intel® Media Driver for VAAPI](https://github.com/intel/media-driver)
  - [Intel® Media SDK](https://github.com/Intel-Media-SDK/MediaSDK)
 
 ## Install Ubuntu & Dependencies
@@ -42,7 +42,7 @@ git checkout 2.2.0
 make -j4
 sudo make install
 ```
-## Intel(R) Media Driver for VAAPI
+## Intel® Media Driver for VAAPI
 Run the following commands to build the Media Driver for VAAPI:
 ``` bash
 cd $WORKDIR
