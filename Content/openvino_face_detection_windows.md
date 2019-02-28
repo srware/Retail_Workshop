@@ -425,5 +425,7 @@ You can find additional information about the samples with examples of how to us
 
 ## Additional Resources
 [Intel® OpenVINO™ Toolkit](https://software.intel.com/en-us/openvino-toolkit)
+
 [Inference Engine Developer Guide](https://software.intel.com/en-us/articles/OpenVINO-InferEngine)
+
 [Pretrained Models](https://software.intel.com/en-us/openvino-toolkit/documentation/pretrained-models)
